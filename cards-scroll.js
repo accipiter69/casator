@@ -25,8 +25,9 @@ function cardsScroll(opts) {
   // Horizontal scroll only makes sense with room — desktop/tablet up.
   // Below this the cards keep their natural (stacked/native) layout.
   var MIN_WIDTH = opts.minWidth != null ? opts.minWidth : 992;
-  var START = opts.start || "top top";
+  var START = opts.start || "top 3.61rem";
   var SCRUB = opts.scrub != null ? opts.scrub : true;
+  var MARKERS = opts.markers != null ? opts.markers : true;
 
   if (window.ScrollTrigger && window.gsap.registerPlugin) {
     window.gsap.registerPlugin(window.ScrollTrigger);
@@ -80,6 +81,7 @@ function cardsScroll(opts) {
             scrub: SCRUB === true ? true : SCRUB,
             invalidateOnRefresh: true,
             anticipatePin: 1,
+            markers: MARKERS,
           },
         },
       );
