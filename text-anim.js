@@ -38,24 +38,14 @@ function storeSplitInstance(element, splitInstance) {
 
 // DRY helper: build a split + scroll-triggered animation in one call.
 function createSplitAnimation(element, config) {
-  var split = SplitText.create(element, {
-    type: config.type, // e.g. "words,chars"
-    mask: config.mask,
-    wordsClass: "split-word",
-    charsClass: "split-char",
-    linesClass: "split-line",
-    autoSplit: true,
-  });
-
-  storeSplitInstance(element, split);
-
   // If the text uses a gradient fill (background-image + background-clip:
   // text + transparent webkit-text-fill-color) — and that gradient sits
   // either on the trigger element itself OR on any wrapper between it
   // and the chars (e.g. inner `.u-white-gradient` spans) — SplitText's
   // per-char wrappers don't inherit the gradient bg-image, so the chars
   // render as transparent (invisible). Walk up from each char to find
-  // the nearest gradient ancestor and copy its bg onto the char.
+  // the nearest gradient ancestor and copy its bg onto the char. Run
+  // in onSplit so it survives autoSplit re-splits (font load, resize).
   function findGradientAncestor(node) {
     var cur = node.parentElement;
     while (cur && cur !== document.body) {
@@ -68,12 +58,12 @@ function createSplitAnimation(element, config) {
       ) {
         return s.backgroundImage;
       }
-      if (cur === element) break; // don't escape the trigger
+      if (cur === element) break;
       cur = cur.parentElement;
     }
     return null;
   }
-  var applyGradient = function (node) {
+  function applyGradient(node) {
     var bg = findGradientAncestor(node);
     if (!bg) return;
     node.style.backgroundImage = bg;
@@ -81,7 +71,24 @@ function createSplitAnimation(element, config) {
     node.style.backgroundClip = "text";
     node.style.webkitTextFillColor = "transparent";
     node.style.color = "transparent";
-  };
+  }
+
+  var split = SplitText.create(element, {
+    type: config.type, // e.g. "words,chars"
+    mask: config.mask,
+    wordsClass: "split-word",
+    charsClass: "split-char",
+    linesClass: "split-line",
+    autoSplit: true,
+    onSplit: function (self) {
+      // autoSplit rebuilds chars on font load / resize — re-apply
+      // gradient AND re-run the entry animation so it stays correct.
+      if (self.chars) self.chars.forEach(applyGradient);
+    },
+  });
+
+  storeSplitInstance(element, split);
+
   if (split.chars) split.chars.forEach(applyGradient);
 
   // Which split bucket to animate.
