@@ -65,6 +65,20 @@ function cardsScroll(opts) {
       var prevOverflow = gallery.style.overflowX;
       gallery.style.overflowX = "clip";
 
+      // Stretch the gallery to fill the viewport below the pin offset
+      // (3.61rem). Without this, when pinned the section is shorter
+      // than the viewport and the next (dark) section peeks through
+      // below the cards. Recomputed on resize via invalidateOnRefresh.
+      var prevMinH = gallery.style.minHeight;
+      function syncMinHeight() {
+        var startOffset =
+          parseFloat(getComputedStyle(document.documentElement).fontSize) *
+          3.61;
+        gallery.style.minHeight = window.innerHeight - startOffset + "px";
+      }
+      syncMinHeight();
+      window.addEventListener("resize", syncMinHeight);
+
       var tween = window.gsap.fromTo(
         line,
         { x: 0 },
@@ -93,6 +107,8 @@ function cardsScroll(opts) {
         tween.kill();
         window.gsap.set(line, { x: 0 });
         gallery.style.overflowX = prevOverflow;
+        gallery.style.minHeight = prevMinH;
+        window.removeEventListener("resize", syncMinHeight);
       };
     });
   });
