@@ -110,6 +110,7 @@ function linkShuffle(selector, opts) {
 
 function initLinkShuffle() {
   linkShuffle(".button_main_text", { eventTarget: ".button_main_wrap" });
+  linkShuffle(".footer_link");
 }
 /* GSAP + plugins load from the SITE-WIDE footer, which Webflow emits
    AFTER this page-level script — so they don't exist yet at parse time.
