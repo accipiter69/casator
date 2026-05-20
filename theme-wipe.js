@@ -63,7 +63,7 @@ function themeWipe(selector, opts) {
   // Edit this default to change ALL .theme-change instances. Accepts:
   // '0.875rem' | '14px' | unitless number (= px). Per-instance override
   // is also possible via opts.fontSize.
-  var FONT_SIZE = opts.fontSize != null ? opts.fontSize : null;
+  var FONT_SIZE = opts.fontSize != null ? opts.fontSize : "1.2rem";
   function resolveFontPx() {
     if (FONT_SIZE == null) return Math.round(CELL * 0.5);
     if (typeof FONT_SIZE === "number") return FONT_SIZE;
@@ -194,13 +194,18 @@ function themeWipe(selector, opts) {
       // height) — the grid covers only this strip, nothing else.
       var boxW = host.clientWidth || host.offsetWidth;
       var boxH = host.clientHeight || host.offsetHeight;
-      var cols = Math.ceil(boxW / CELL);
-      var rows = Math.ceil(boxH / CELL);
-      total = cols * rows;
-      grid.style.gridTemplateColumns = "repeat(" + cols + ", " + CELL + "px)";
-      grid.style.gridTemplateRows = "repeat(" + rows + ", " + CELL + "px)";
-
+      // Cell side scales with the font when FONT_SIZE is overridden
+      // (maintaining the original 2:1 cell:font ratio). Bigger font
+      // → bigger cells → fewer cells across the box.
       var fontPx = resolveFontPx();
+      var cellPx = FONT_SIZE != null ? fontPx * 2 : CELL;
+      var cols = Math.ceil(boxW / cellPx);
+      var rows = Math.ceil(boxH / cellPx);
+      total = cols * rows;
+      grid.style.gridTemplateColumns =
+        "repeat(" + cols + ", " + cellPx + "px)";
+      grid.style.gridTemplateRows =
+        "repeat(" + rows + ", " + cellPx + "px)";
       var frag = document.createDocumentFragment();
       var cellData = [];
       for (var idx = 0; idx < total; idx++) {
