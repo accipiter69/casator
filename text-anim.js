@@ -49,24 +49,40 @@ function createSplitAnimation(element, config) {
 
   storeSplitInstance(element, split);
 
-  // If the source element uses gradient text (e.g. `.u-white-gradient`
-  // with background-image + background-clip:text + transparent fill),
-  // SplitText's per-char wrappers don't inherit the background, so the
-  // chars render as transparent (invisible). Copy the gradient props
-  // onto every child so the look survives the split.
-  var cs = getComputedStyle(element);
-  var bgImg = cs.backgroundImage;
-  if (bgImg && bgImg !== "none") {
-    var apply = function (node) {
-      node.style.backgroundImage = bgImg;
-      node.style.webkitBackgroundClip = "text";
-      node.style.backgroundClip = "text";
-      node.style.webkitTextFillColor = "transparent";
-      node.style.color = "transparent";
-    };
-    if (split.chars) split.chars.forEach(apply);
-    if (split.words) split.words.forEach(apply);
+  // If the text uses a gradient fill (background-image + background-clip:
+  // text + transparent webkit-text-fill-color) — and that gradient sits
+  // either on the trigger element itself OR on any wrapper between it
+  // and the chars (e.g. inner `.u-white-gradient` spans) — SplitText's
+  // per-char wrappers don't inherit the gradient bg-image, so the chars
+  // render as transparent (invisible). Walk up from each char to find
+  // the nearest gradient ancestor and copy its bg onto the char.
+  function findGradientAncestor(node) {
+    var cur = node.parentElement;
+    while (cur && cur !== document.body) {
+      var s = getComputedStyle(cur);
+      var clip = s.webkitBackgroundClip || s.backgroundClip;
+      if (
+        s.backgroundImage &&
+        s.backgroundImage !== "none" &&
+        clip === "text"
+      ) {
+        return s.backgroundImage;
+      }
+      if (cur === element) break; // don't escape the trigger
+      cur = cur.parentElement;
+    }
+    return null;
   }
+  var applyGradient = function (node) {
+    var bg = findGradientAncestor(node);
+    if (!bg) return;
+    node.style.backgroundImage = bg;
+    node.style.webkitBackgroundClip = "text";
+    node.style.backgroundClip = "text";
+    node.style.webkitTextFillColor = "transparent";
+    node.style.color = "transparent";
+  };
+  if (split.chars) split.chars.forEach(applyGradient);
 
   // Which split bucket to animate.
   var targets =
