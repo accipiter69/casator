@@ -56,17 +56,30 @@ function createSplitAnimation(element, config) {
         s.backgroundImage !== "none" &&
         clip === "text"
       ) {
-        return s.backgroundImage;
+        return { bgImage: s.backgroundImage, lineEl: cur };
       }
       if (cur === element) break;
       cur = cur.parentElement;
     }
     return null;
   }
+  // Per-char gradient was visually wrong (each letter restarted the
+  // gradient at white). Anchor the same gradient to the gradient
+  // ancestor's box and offset each char's background-position so the
+  // gradient reads continuously across the whole LINE.
   function applyGradient(node) {
-    var bg = findGradientAncestor(node);
-    if (!bg) return;
-    node.style.backgroundImage = bg;
+    var info = findGradientAncestor(node);
+    if (!info) return;
+    var lineRect = info.lineEl.getBoundingClientRect();
+    var nodeRect = node.getBoundingClientRect();
+    node.style.backgroundImage = info.bgImage;
+    node.style.backgroundSize = lineRect.width + "px " + lineRect.height + "px";
+    node.style.backgroundPosition =
+      -(nodeRect.left - lineRect.left) +
+      "px " +
+      -(nodeRect.top - lineRect.top) +
+      "px";
+    node.style.backgroundRepeat = "no-repeat";
     node.style.webkitBackgroundClip = "text";
     node.style.backgroundClip = "text";
     node.style.webkitTextFillColor = "transparent";
