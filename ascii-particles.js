@@ -380,7 +380,7 @@ function asciiParticles(selector, opts) {
 function initAsciiParticles() {
   // Edit fontSize below to change ASCII text size for ALL instances.
   // Accepts '1rem', '14px', a unitless number = px, or null = auto-fit.
-  asciiParticles(".ascii_wrap", { fontSize: "1rem" });
+  asciiParticles(".ascii_wrap", { fontSize: "1.2rem" });
 }
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initAsciiParticles, {
