@@ -59,6 +59,25 @@ function themeWipe(selector, opts) {
   var INK = MODE === "dark" ? DARK_INK : LIGHT_INK;
 
   var CHARS = opts.chars || "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  // Letter font size. null = auto (CELL * 0.5, original behaviour).
+  // Edit this default to change ALL .theme-change instances. Accepts:
+  // '0.875rem' | '14px' | unitless number (= px). Per-instance override
+  // is also possible via opts.fontSize.
+  var FONT_SIZE = opts.fontSize != null ? opts.fontSize : null;
+  function resolveFontPx() {
+    if (FONT_SIZE == null) return Math.round(CELL * 0.5);
+    if (typeof FONT_SIZE === "number") return FONT_SIZE;
+    var s = String(FONT_SIZE).trim();
+    var n = parseFloat(s);
+    if (!isFinite(n)) return Math.round(CELL * 0.5);
+    if (/rem$/i.test(s)) {
+      var root = parseFloat(
+        getComputedStyle(document.documentElement).fontSize,
+      );
+      return n * (root || 16);
+    }
+    return n;
+  }
   // Just under a typical Webflow fixed navbar (≈9999/10000) so the
   // bar stays visible during the wipe; raise to cover the nav too.
   var ZINDEX = opts.zIndex != null ? opts.zIndex : 9998;
@@ -181,7 +200,7 @@ function themeWipe(selector, opts) {
       grid.style.gridTemplateColumns = "repeat(" + cols + ", " + CELL + "px)";
       grid.style.gridTemplateRows = "repeat(" + rows + ", " + CELL + "px)";
 
-      var fontPx = Math.round(CELL * 0.5);
+      var fontPx = resolveFontPx();
       var frag = document.createDocumentFragment();
       var cellData = [];
       for (var idx = 0; idx < total; idx++) {

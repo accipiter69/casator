@@ -9,7 +9,6 @@
    Usage (Webflow Footer Code — no gsap needed):
        asciiParticles('.ascii-particles');
        asciiParticles('.ascii-particles', { cursorRadius: 180, weight: 400 });
-       asciiParticles('.ascii-particles', { fontSize: '1.2rem' }); // global size
 
    The element keeps owning layout; the canvas overlays it and owns
    paint (same model as ascii.js). JetBrains Mono 400 must be loaded
@@ -25,25 +24,6 @@ function asciiParticles(selector, opts) {
   // strokes overlap so the mass reads brighter/denser on a dark bg
   // (the tiny thin glyphs otherwise look dim due to sub-pixel AA).
   var GLYPH_SCALE = opts.glyphScale != null ? opts.glyphScale : 1.32;
-
-  // Global font-size override. If set (e.g. '1.2rem' or 14), every
-  // instance uses this size instead of the auto-fit-to-box default.
-  // Accepts: number (px) | string ending in 'rem' / 'px' / unitless.
-  var FONT_SIZE_OPT = opts.fontSize != null ? opts.fontSize : null;
-  function resolveFontPx() {
-    if (FONT_SIZE_OPT == null) return null;
-    if (typeof FONT_SIZE_OPT === "number") return FONT_SIZE_OPT;
-    var s = String(FONT_SIZE_OPT).trim();
-    var n = parseFloat(s);
-    if (!isFinite(n)) return null;
-    if (/rem$/i.test(s)) {
-      var root = parseFloat(
-        getComputedStyle(document.documentElement).fontSize,
-      );
-      return n * (root || 16);
-    }
-    return n; // px or unitless
-  }
 
   // Physics + look (verbatim defaults from the reference, overridable).
   var CFG = {
@@ -132,13 +112,8 @@ function asciiParticles(selector, opts) {
       H = box.height;
     if (!W || !H) return;
 
-    // If opts.fontSize was provided, honour it verbatim (rem/px); else
-    // pick the largest font where the whole grid fits the box (contain).
-    var override = resolveFontPx();
-    var fontPx =
-      override != null
-        ? Math.max(1, override)
-        : Math.max(1, Math.min(W / (cols * CW), H / (rows * LH)));
+    // Largest font where the whole grid still fits the box (contain).
+    var fontPx = Math.max(1, Math.min(W / (cols * CW), H / (rows * LH)));
     var charW = fontPx * CW;
     var lineH = fontPx * LH;
     var gridW = cols * charW;
@@ -378,9 +353,7 @@ function asciiParticles(selector, opts) {
 }
 
 function initAsciiParticles() {
-  // Edit fontSize below to change ASCII text size for ALL instances.
-  // Accepts '1rem', '14px', a unitless number = px, or null = auto-fit.
-  asciiParticles(".ascii_wrap", { fontSize: "1.2rem" });
+  asciiParticles(".ascii_wrap");
 }
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initAsciiParticles, {
