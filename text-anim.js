@@ -49,6 +49,25 @@ function createSplitAnimation(element, config) {
 
   storeSplitInstance(element, split);
 
+  // If the source element uses gradient text (e.g. `.u-white-gradient`
+  // with background-image + background-clip:text + transparent fill),
+  // SplitText's per-char wrappers don't inherit the background, so the
+  // chars render as transparent (invisible). Copy the gradient props
+  // onto every child so the look survives the split.
+  var cs = getComputedStyle(element);
+  var bgImg = cs.backgroundImage;
+  if (bgImg && bgImg !== "none") {
+    var apply = function (node) {
+      node.style.backgroundImage = bgImg;
+      node.style.webkitBackgroundClip = "text";
+      node.style.backgroundClip = "text";
+      node.style.webkitTextFillColor = "transparent";
+      node.style.color = "transparent";
+    };
+    if (split.chars) split.chars.forEach(apply);
+    if (split.words) split.words.forEach(apply);
+  }
+
   // Which split bucket to animate.
   var targets =
     config.animateTarget === "chars"
