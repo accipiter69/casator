@@ -4,7 +4,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const wrap = document.querySelector(".platform_contain");
   if (!wrap) return;
-  const stage = wrap.querySelector(".w-dyn-list");
+  const stage = wrap.querySelector(".platform_stage");
   const line = wrap.querySelector(".platform_scroll");
   const items = wrap.querySelectorAll(".platform_item");
   if (!stage || !line || !items.length) return;
