@@ -140,7 +140,7 @@ function initVisionCards() {
       card.style.opacity = "1";
       return;
     }
-    window.gsap.set(card, { opacity: 0.5 });
+    window.gsap.set(card, { opacity: 0.3 });
     window.gsap.to(card, {
       opacity: 1,
       duration: 0.6,
