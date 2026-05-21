@@ -80,7 +80,7 @@ function themeWipe(selector, opts) {
   }
   // Just under a typical Webflow fixed navbar (≈9999/10000) so the
   // bar stays visible during the wipe; raise to cover the nav too.
-  var ZINDEX = opts.zIndex != null ? opts.zIndex : 9998;
+  var ZINDEX = opts.zIndex != null ? opts.zIndex : 500;
   // Raggedness of the advancing front, in ~rows of jitter.
   var BLEED = opts.bleed != null ? opts.bleed : 1.5;
   // Behind the fill front the letters fade out (color → cell bg) so
@@ -202,10 +202,8 @@ function themeWipe(selector, opts) {
       var cols = Math.ceil(boxW / cellPx);
       var rows = Math.ceil(boxH / cellPx);
       total = cols * rows;
-      grid.style.gridTemplateColumns =
-        "repeat(" + cols + ", " + cellPx + "px)";
-      grid.style.gridTemplateRows =
-        "repeat(" + rows + ", " + cellPx + "px)";
+      grid.style.gridTemplateColumns = "repeat(" + cols + ", " + cellPx + "px)";
+      grid.style.gridTemplateRows = "repeat(" + rows + ", " + cellPx + "px)";
       var frag = document.createDocumentFragment();
       var cellData = [];
       for (var idx = 0; idx < total; idx++) {
