@@ -127,8 +127,36 @@ function visionLine(selector, opts) {
   });
 }
 
+/* ---- Vision cards: opacity 0.5 → 1 when each card hits 90% viewport ---- */
+function initVisionCards() {
+  if (!window.gsap || !window.ScrollTrigger) return;
+  var reduce =
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll(".vision_card").forEach(function (card) {
+    if (card.dataset.visionCardBound === "1") return;
+    card.dataset.visionCardBound = "1";
+    if (reduce) {
+      card.style.opacity = "1";
+      return;
+    }
+    window.gsap.set(card, { opacity: 0.5 });
+    window.gsap.to(card, {
+      opacity: 1,
+      duration: 0.6,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: card,
+        start: "bottom 90%",
+        toggleActions: "play none none reverse",
+      },
+    });
+  });
+}
+
 function initVisionLine() {
   visionLine(".vision_visual");
+  initVisionCards();
 }
 /* GSAP + ScrollTrigger load from the SITE-WIDE footer, which Webflow
    emits AFTER this page-level script — so they don't exist yet at
