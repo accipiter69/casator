@@ -25,7 +25,7 @@ function initSpanBoxReveal() {
       ease: "power3.out",
       scrollTrigger: {
         trigger: el,
-        start: "top 80%",
+        start: "top 70%",
         toggleActions: "play none none reverse",
       },
     });
@@ -66,9 +66,87 @@ function initIcon112Reveal() {
   });
 }
 
+/* .cta-img — mouse-driven parallax + tilt. Same transform math as the
+   hero phoenix (mxLerp / myLerp → translate + rotateX/Y/Z), but no
+   ASCII letters / particle trail / scroll-fade. Pure float-toward-cursor. */
+function initCtaImgMotion() {
+  var img = document.querySelector(".cta-img");
+  if (!img) return;
+  var reduce =
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) return;
+
+  img.style.willChange = "transform";
+
+  var mx = 0,
+    my = 0,
+    mxLerp = 0,
+    myLerp = 0;
+
+  function readMouse(e) {
+    var rect = img.getBoundingClientRect();
+    mx = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2);
+    my = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2);
+    mx = Math.max(-1, Math.min(1, mx));
+    my = Math.max(-1, Math.min(1, my));
+  }
+  window.addEventListener("mousemove", readMouse, { passive: true });
+  window.addEventListener("mouseout", function (e) {
+    if (!e.relatedTarget) {
+      mx = 0;
+      my = 0;
+    }
+  });
+
+  var inView = true,
+    running = false;
+  function schedule() {
+    if (inView) {
+      running = true;
+      requestAnimationFrame(render);
+    } else {
+      running = false;
+    }
+  }
+  function render() {
+    mxLerp += (mx - mxLerp) * 0.08;
+    myLerp += (my - myLerp) * 0.08;
+    var transX = mxLerp * 12;
+    var transY = myLerp * 8;
+    var rotY = mxLerp * 12;
+    var rotX = -myLerp * 8;
+    var rotZ = mxLerp * 2.5;
+    img.style.transform =
+      "translate3d(" +
+      transX +
+      "px," +
+      transY +
+      "px,0) rotateY(" +
+      rotY +
+      "deg) rotateX(" +
+      rotX +
+      "deg) rotateZ(" +
+      rotZ +
+      "deg)";
+    schedule();
+  }
+  if (window.IntersectionObserver) {
+    new IntersectionObserver(
+      function (entries) {
+        inView = entries[0].isIntersecting;
+        if (inView && !running) schedule();
+      },
+      { rootMargin: "0px" },
+    ).observe(img);
+  }
+  schedule();
+}
+
 function initHome() {
   initSpanBoxReveal();
   initIcon112Reveal();
+  initCtaImgMotion();
 }
 /* GSAP + ScrollTrigger load from the SITE-WIDE footer, which Webflow
    emits AFTER this page-level script — poll for them. */
