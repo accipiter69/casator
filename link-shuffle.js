@@ -151,6 +151,8 @@ function linkShuffle(selector, opts) {
 function initLinkShuffle() {
   linkShuffle(".button_main_text", { eventTarget: ".button_main_wrap" });
   linkShuffle(".footer_link");
+  linkShuffle(".nav_link");
+  linkShuffle(".cta_card.h3", { eventTarget: ".cta_card" });
 }
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initLinkShuffle, {
