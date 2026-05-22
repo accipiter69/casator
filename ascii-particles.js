@@ -29,14 +29,17 @@ function asciiParticles(selector, opts) {
   var CFG = {
     // Heavier default weight reads much brighter than hairline 400.
     weight: opts.weight != null ? opts.weight : 600,
-    cursorRadius: opts.cursorRadius != null ? opts.cursorRadius : 235,
-    cursorForce: opts.cursorForce != null ? opts.cursorForce : 3,
+    cursorRadius: opts.cursorRadius != null ? opts.cursorRadius : 200,
+    cursorForce: opts.cursorForce != null ? opts.cursorForce : 1.5,
     idleTimeout: opts.idleTimeout != null ? opts.idleTimeout : 200,
     scrollForce: opts.scrollForce != null ? opts.scrollForce : 35,
     scrollDecay: opts.scrollDecay != null ? opts.scrollDecay : 81,
     scrollMult: opts.scrollMult != null ? opts.scrollMult : 3,
     returnSpeed: opts.returnSpeed != null ? opts.returnSpeed : 5,
     friction: opts.friction != null ? opts.friction : 75,
+    // Hard cap on how far (px) a particle may stray from its origin —
+    // stops cursor flicks from launching glyphs off the logo. 0 = off.
+    maxDisplace: opts.maxDisplace != null ? opts.maxDisplace : 90,
   };
   // Reference glyph cell geometry (charW = fs*0.62, lineH = fs*1.3).
   var CW = 0.62;
@@ -95,6 +98,21 @@ function asciiParticles(selector, opts) {
     this.vy *= friction;
     this.x += this.vx;
     this.y += this.vy;
+    // Clamp distance from origin so a fast cursor flick can't fling a
+    // glyph off the logo; bleed off velocity when the cap is hit.
+    var cap = CFG.maxDisplace;
+    if (cap > 0) {
+      var ddx = this.x - this.ox;
+      var ddy = this.y - this.oy;
+      var dd = ddx * ddx + ddy * ddy;
+      if (dd > cap * cap) {
+        var d = Math.sqrt(dd);
+        this.x = this.ox + (ddx / d) * cap;
+        this.y = this.oy + (ddy / d) * cap;
+        this.vx *= 0.5;
+        this.vy *= 0.5;
+      }
+    }
   };
 
   // Lay the grid out into particles sized to the element's box, and
