@@ -58,15 +58,22 @@ function cylinderCarousel(opts) {
   // centered stage. Done by measurement (not vw/% which are thrown off by
   // the parent container, scrollbar, and Webflow width rules).
   function centerHost() {
-    // Webflow wraps this in containers with overflow:clip (~738px wide) —
-    // un-clip every ancestor so the carousel can span the full viewport.
+    // The carousel is full-bleed — stretched to the viewport width and
+    // shifted to the left edge. Webflow wraps it in containers with
+    // overflow:clip; un-clip ONLY the containers between the host and
+    // its section so the bleed isn't cut. The section itself (already
+    // full-viewport width) is set to clip, so the spinning 3D slides —
+    // and the whole carousel on narrow viewports — stay contained
+    // instead of leaking into the page / neighbouring sections.
+    var section = host.closest("section");
     var p = host.parentElement;
-    while (p && p !== document.documentElement) {
+    while (p && p !== section && p !== document.documentElement) {
       if (getComputedStyle(p).overflow !== "visible") {
         p.style.overflow = "visible";
       }
       p = p.parentElement;
     }
+    if (section) section.style.overflow = "clip";
     // Keep the page from gaining a horizontal scrollbar from the bleed.
     document.documentElement.style.overflowX = "clip";
     var vw = document.documentElement.clientWidth;

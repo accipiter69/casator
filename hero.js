@@ -148,6 +148,19 @@ window.PHX_DATA_URI =
     grid = sampleImage();
   }
 
+  /* The dynamic transform composes its offsets onto translate(-50%,-50%)
+     — which only CENTRES .hero_bird while Webflow positions it out of
+     flow (position:absolute), as on desktop. On the tablet/mobile
+     breakpoint the bird sits in normal flow, where -50% would yank it
+     half off the top-left corner. Use -50% only when it's out of flow;
+     otherwise leave it where Webflow's layout places it. */
+  var centerOffset = "-50%";
+  function updateCenterOffset() {
+    var pos = getComputedStyle(stage).position;
+    centerOffset = pos === "absolute" || pos === "fixed" ? "-50%" : "0px";
+  }
+  updateCenterOffset();
+
   /* ---- Mouse + scroll state ---- */
   var mx = 0,
     my = 0; // mouse target -1..1 within stage
@@ -185,6 +198,7 @@ window.PHX_DATA_URI =
   window.addEventListener(
     "resize",
     function () {
+      updateCenterOffset();
       layout();
     },
     { passive: true },
@@ -256,9 +270,13 @@ window.PHX_DATA_URI =
     var scl = 1 - sPLerp * 0.32;
     var op = 1 - sPLerp * 0.85;
     stage.style.transform =
-      "translate(calc(-50% + " +
+      "translate(calc(" +
+      centerOffset +
+      " + " +
       transX +
-      "px), calc(-50% + " +
+      "px), calc(" +
+      centerOffset +
+      " + " +
       transY +
       "px))" +
       " rotateY(" +
