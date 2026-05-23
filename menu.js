@@ -33,6 +33,7 @@ function initMenu() {
   function openMenu() {
     header.classList.add("is--open");
     burger.classList.add("is--open");
+    if (typeof disableScroll === "function") disableScroll();
     if (wrps.length) {
       window.gsap.fromTo(
         wrps,
@@ -54,6 +55,7 @@ function initMenu() {
   function closeMenu() {
     header.classList.remove("is--open");
     burger.classList.remove("is--open");
+    if (typeof enableScroll === "function") enableScroll();
     // The closing clip-path hides the wrps visually — just snap them
     // back to the hidden state so the next open animates from scratch.
     if (wrps.length) window.gsap.set(wrps, { opacity: 0, y: -24 });
@@ -81,13 +83,16 @@ function initMenu() {
     });
 
     // matchMedia cleanup: detach listeners + drop class on resize-up.
+    // If the menu was open at that moment, scroll lock must release too.
     return function () {
       burger.removeEventListener("click", onBurger);
       links.forEach(function (a) {
         a.removeEventListener("click", onLink);
       });
+      var wasOpen = header.classList.contains("is--open");
       header.classList.remove("is--open");
       burger.classList.remove("is--open");
+      if (wasOpen && typeof enableScroll === "function") enableScroll();
     };
   });
 }
