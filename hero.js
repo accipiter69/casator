@@ -19,8 +19,25 @@ window.PHX_DATA_URI =
   var ORANGE = [250, 76, 20];
   var WHITE = [255, 230, 200];
   var DPR = Math.min(2, window.devicePixelRatio || 1);
+  // Cell + font px scale with the stage width — on narrow viewports the
+  // default 8/11 yields a sparse grid (only a handful of letters across
+  // the bird), so step down for mobile/tablet to keep the texture dense.
   var CELL = 8; // physical px per ASCII cell; resized on layout
   var FONT_PX = 11;
+  function updateCellMetrics() {
+    var w = stage.getBoundingClientRect().width;
+    if (w < 480) {
+      CELL = 5;
+      FONT_PX = 7;
+    } else if (w < 768) {
+      CELL = 6;
+      FONT_PX = 9;
+    } else {
+      CELL = 8;
+      FONT_PX = 11;
+    }
+  }
+  updateCellMetrics();
 
   var ctx = cv.getContext("2d", { alpha: true });
   var tctx = trail.getContext("2d", { alpha: true });
@@ -143,6 +160,7 @@ window.PHX_DATA_URI =
   }
 
   function layout() {
+    updateCellMetrics();
     fitCanvas(cv);
     fitTrailCanvas();
     grid = sampleImage();
