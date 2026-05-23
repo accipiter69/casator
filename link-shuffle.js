@@ -149,6 +149,16 @@ function linkShuffle(selector, opts) {
 }
 
 function initLinkShuffle() {
+  // The effect wraps each character in an inline-block span with width:1ch
+  // so swapped glyphs don't jiggle layout. On touch devices that's
+  // pointless (no hover to trigger it) and the 1ch boxes can wreck word
+  // spacing — so only run where pointer-hover actually exists.
+  if (
+    window.matchMedia &&
+    !window.matchMedia("(hover: hover)").matches
+  ) {
+    return;
+  }
   linkShuffle(".button_main_text", { eventTarget: ".button_main_wrap" });
   linkShuffle(".footer_link");
   linkShuffle(".nav_link");
