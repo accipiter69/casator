@@ -502,6 +502,10 @@ window.PHX_DATA_URI =
     var HOLD_END = 1700;
     var FADE_END = 2200;
 
+    // Preloader font scales down on narrow viewports — at 13px the
+    // glyphs overlap heavily on a small bird and the silhouette reads
+    // as a thick black/orange smear rather than a field of letters.
+    var preFontPx = 13;
     function resize() {
       W = window.innerWidth;
       H = window.innerHeight;
@@ -510,6 +514,7 @@ window.PHX_DATA_URI =
       cv.style.width = W + "px";
       cv.style.height = H + "px";
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      preFontPx = W < 480 ? 7 : W < 768 ? 9 : 13;
     }
     resize();
     window.addEventListener("resize", resize);
@@ -657,7 +662,8 @@ window.PHX_DATA_URI =
       var elapsed = now - startTime;
       ctx.clearRect(0, 0, W, H);
       ctx.font =
-        '13px ui-monospace, "SF Mono", Menlo, "Roboto Mono", monospace';
+        preFontPx +
+        'px ui-monospace, "SF Mono", Menlo, "Roboto Mono", monospace';
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
