@@ -34,16 +34,21 @@ function initMenu() {
     header.classList.add("is--open");
     burger.classList.add("is--open");
     if (wrps.length) {
-      window.gsap.to(wrps, {
-        opacity: 1,
-        y: 0,
-        duration: 0.25,
-        ease: "power2.out",
-        stagger: { each: 0.05, from: "start" },
-        // Slight delay so the clip-path panel starts opening first;
-        // links then appear inside it instead of pre-empting the reveal.
-        delay: 0.15,
-      });
+      window.gsap.fromTo(
+        wrps,
+        { opacity: 0, y: -24 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          ease: "power3.out",
+          stagger: { each: 0.07, from: "start" },
+          // Slight delay so the clip-path panel starts opening first;
+          // links then appear inside it instead of pre-empting the reveal.
+          delay: 0.2,
+          overwrite: "auto",
+        },
+      );
     }
   }
   function closeMenu() {
@@ -51,7 +56,7 @@ function initMenu() {
     burger.classList.remove("is--open");
     // The closing clip-path hides the wrps visually — just snap them
     // back to the hidden state so the next open animates from scratch.
-    if (wrps.length) window.gsap.set(wrps, { opacity: 0, y: -20 });
+    if (wrps.length) window.gsap.set(wrps, { opacity: 0, y: -24 });
   }
 
   var mm = window.gsap.matchMedia();
@@ -59,7 +64,7 @@ function initMenu() {
     // Hidden initial state — only on mobile. matchMedia auto-reverts
     // these sets when the MQ stops matching, so the desktop nav links
     // don't get stuck at opacity:0.
-    window.gsap.set(wrps, { opacity: 0, y: -20 });
+    window.gsap.set(wrps, { opacity: 0, y: -24 });
 
     function onBurger() {
       if (header.classList.contains("is--open")) closeMenu();
