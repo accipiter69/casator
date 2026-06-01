@@ -119,13 +119,25 @@ function createSplitAnimation(element, config) {
                 .replace("lines", "") || "chars"
             ];
 
+  // Resolve the ScrollTrigger trigger. Defaults to the animated element;
+  // a preset may point it at a related element via `trigger` (selector),
+  // resolved as the nearest matching self/ancestor so multiple matches on
+  // the page each bind to their own — with a global querySelector fallback.
+  var triggerEl = element;
+  if (config.trigger) {
+    triggerEl =
+      element.closest(config.trigger) ||
+      document.querySelector(config.trigger) ||
+      element;
+  }
+
   gsap.set(targets, config.from);
   gsap.to(
     targets,
     Object.assign({}, config.to, {
       scrollTrigger: Object.assign(
         {
-          trigger: element,
+          trigger: triggerEl,
           start: config.start || "top 90%",
           toggleActions: config.toggleActions || "play none none none",
         },
@@ -149,6 +161,20 @@ var animationPresets = {
       stagger: { amount: 0.5 },
     },
     start: "top 80%",
+  },
+  "text-fill-scrub": {
+    type: "words",
+    animateTarget: "words",
+    trigger: ".text-fill",
+    from: { opacity: 0.18 },
+    to: {
+      opacity: 1,
+      duration: 0.3,
+      ease: "none",
+      stagger: { each: 0.4 },
+    },
+    start: "top top",
+    scrollTrigger: { end: "bottom bottom", scrub: 0.6 },
   },
 };
 
