@@ -15,6 +15,13 @@ window.PHX_DATA_URI =
     window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  // Devices that can't hover (touch phones / tablets) get a STATIC hero:
+  // the scroll-reactive canvas animation janks there, so we paint ONE frame
+  // and skip the rAF loop, scroll transform and embers entirely. The
+  // preloader's assemble-from-symbols intro still plays (separate IIFE).
+  var noHover =
+    !window.matchMedia || !window.matchMedia("(hover: hover)").matches;
+
   var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".split("");
   var ORANGE = [250, 76, 20];
   var WHITE = [255, 230, 200];
@@ -235,6 +242,7 @@ window.PHX_DATA_URI =
     function () {
       updateCenterOffset();
       layout();
+      if (noHover) paintStaticFrame();
     },
     { passive: true },
   );
@@ -447,6 +455,50 @@ window.PHX_DATA_URI =
     schedule();
   }
 
+  /* ---- Static frame (no-hover / touch devices) --------------------------
+     Paint the ASCII silhouette ONCE at rest — no animation loop, no scroll
+     transform, no embers. Keeps the assembled look without the per-frame
+     canvas cost that janks touch scrolling. ---------------------------- */
+  function paintStaticFrame() {
+    // Park the stage at its rest transform (centre only; no scroll skew).
+    stage.style.transform =
+      "translate(" + centerOffset + ", " + centerOffset + ")";
+    stage.style.opacity = "1";
+    if (!grid) return;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    tctx.clearRect(0, 0, trail.width, trail.height);
+    ctx.font = FONT_PX * DPR + 'px ui-monospace, "JetBrains Mono", monospace';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    var cw = (grid.w / grid.cols) * DPR;
+    var ch = (grid.h / grid.rows) * DPR;
+    var MASK_A = 0.55,
+      MASK_I = 0.28,
+      MASK_AI = 0.18,
+      EDGE_BAND = 0.14;
+    for (var r = 0; r < grid.rows; r++) {
+      for (var c = 0; c < grid.cols; c++) {
+        var idx = r * grid.cols + c;
+        var a = grid.A[idx];
+        if (a < MASK_A) continue;
+        var I = grid.I[idx];
+        if (I < MASK_I) continue;
+        if (a * I < MASK_AI) continue;
+        var x = (c + 0.5) * cw;
+        var y = (r + 0.5) * ch;
+        var bucket = Math.floor(c * 0.13 + r * 0.07); // t = 0
+        var seed =
+          ((c * 73856093) ^ (r * 19349663) ^ (bucket * 83492791)) >>> 0;
+        var letterIdx = seed % CHARS.length;
+        var edge = Math.min(1, (a - MASK_A) / EDGE_BAND);
+        edge = edge * edge * (3 - 2 * edge);
+        var alpha = edge * (0.4 + I * 0.55);
+        ctx.fillStyle = "rgba(255,255,255," + alpha.toFixed(2) + ")";
+        ctx.fillText(CHARS[letterIdx], x, y);
+      }
+    }
+  }
+
   /* ---- Boot ---- */
   function boot() {
     layout();
@@ -456,18 +508,26 @@ window.PHX_DATA_URI =
         "load",
         function () {
           layout();
+          if (noHover) paintStaticFrame();
         },
         { once: true },
       );
     }
     readScroll();
+    // No-hover (touch): one static frame, then stop — no loop, no scroll
+    // transform, no embers. Desktop keeps the full live animation.
+    if (noHover) {
+      paintStaticFrame();
+      return;
+    }
     schedule();
   }
   if (img.complete) boot();
   else img.addEventListener("load", boot, { once: true });
 
-  // Gate the loop on viewport visibility.
-  if (window.IntersectionObserver) {
+  // Gate the loop on viewport visibility. Skipped on no-hover — there is no
+  // loop to gate; the static frame is painted once in boot().
+  if (!noHover && window.IntersectionObserver) {
     new IntersectionObserver(
       function (entries) {
         inView = entries[0].isIntersecting;
