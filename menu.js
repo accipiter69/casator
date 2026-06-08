@@ -126,6 +126,7 @@ function drop(options) {
   var stopClosingAt = options.stopClosingAt != null ? options.stopClosingAt : 768;
   var overlay = options.overlay || null;
   var closeOnOverlay = !!options.closeOnOverlay;
+  var closeSelector = options.closeSelector || null;
   var onOpen = typeof options.onOpen === "function" ? options.onOpen : null;
   var onClose = typeof options.onClose === "function" ? options.onClose : null;
 
@@ -209,6 +210,17 @@ function drop(options) {
   if (overlay && closeOnOverlay) {
     overlay.addEventListener("click", function () {
       drops.forEach(closeDrop);
+    });
+  }
+
+  // Explicit close buttons inside the parent (e.g. a `.close-nav` link in
+  // the dropdown panel) — click closes every open drop.
+  if (closeSelector) {
+    parent.querySelectorAll(closeSelector).forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        drops.forEach(closeDrop);
+      });
     });
   }
 }
@@ -301,6 +313,7 @@ function initHeaderDrop() {
     stopClosingAt: 1, // single dropdown — sibling-close value is moot
     overlay: overlay,
     closeOnOverlay: true,
+    closeSelector: ".close-nav",
     onOpen: showOverlay,
     onClose: hideOverlay,
   });
