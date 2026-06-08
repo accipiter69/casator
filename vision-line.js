@@ -113,8 +113,12 @@ function visionLine(selector, opts) {
   });
 
   /* ---- Resize: re-sync on breakpoint switch + keep ST in sync ---- */
-  var rT;
+  var rT,
+    lastW = window.innerWidth;
   window.addEventListener("resize", function () {
+    // Skip height-only resizes (mobile URL bar) — only width changes rebuild.
+    if (window.innerWidth === lastW) return;
+    lastW = window.innerWidth;
     clearTimeout(rT);
     rT = setTimeout(function () {
       _bound.forEach(function (h) {

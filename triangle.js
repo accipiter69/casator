@@ -121,8 +121,12 @@ function triangleReveal(selector, opts) {
   });
 
   /* ---- Resize: keep ScrollTrigger positions in sync ---- */
-  var rT;
+  var rT,
+    lastW = window.innerWidth;
   window.addEventListener("resize", function () {
+    // Skip height-only resizes (mobile URL bar) — only width changes rebuild.
+    if (window.innerWidth === lastW) return;
+    lastW = window.innerWidth;
     clearTimeout(rT);
     rT = setTimeout(function () {
       if (window.ScrollTrigger) window.ScrollTrigger.refresh();

@@ -82,6 +82,12 @@ function journeySticky(selector, opts) {
 
   if (window.ScrollTrigger && window.gsap.registerPlugin) {
     window.gsap.registerPlugin(window.ScrollTrigger);
+    // Ignore mobile viewport-HEIGHT changes (URL bar show/hide on scroll).
+    // Without this, every address-bar toggle fires ScrollTrigger's internal
+    // resize → re-measure of every trigger → scroll-up jank on phones.
+    if (window.ScrollTrigger.config) {
+      window.ScrollTrigger.config({ ignoreMobileResize: true });
+    }
   }
 
   var _bound = [];
@@ -265,8 +271,14 @@ function journeySticky(selector, opts) {
   });
 
   /* ---- Resize: keep ScrollTrigger positions in sync ---- */
-  var rT;
+  var rT,
+    lastW = window.innerWidth;
   window.addEventListener("resize", function () {
+    // Height-only resizes are the mobile URL bar appearing/hiding on scroll.
+    // Rebuilding + ScrollTrigger.refresh() on every toggle is what janks
+    // scroll-up on phones — so only real WIDTH changes rebuild.
+    if (window.innerWidth === lastW) return;
+    lastW = window.innerWidth;
     clearTimeout(rT);
     rT = setTimeout(function () {
       _bound.forEach(function (w) {
