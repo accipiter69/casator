@@ -130,8 +130,13 @@ function asciiParticles(selector, opts) {
       H = box.height;
     if (!W || !H) return;
 
-    // Largest font where the whole grid still fits the box (contain).
-    var fontPx = Math.max(1, Math.min(W / (cols * CW), H / (rows * LH)));
+    // Largest font where the whole grid still fits the box (contain), with
+    // a margin so the GLYPH_SCALE-enlarged edge glyphs aren't clipped.
+    // NO Math.max(1,…) floor: on tiny boxes (small mobile icons) a 1px floor
+    // makes the grid LARGER than the box → it overflows and the icon gets
+    // clipped on every side. A plain contain-fit always stays inside.
+    var FIT = 0.9; // ~10% headroom absorbs the oversized (GLYPH_SCALE) glyphs
+    var fontPx = Math.min(W / (cols * CW), H / (rows * LH)) * FIT;
     var charW = fontPx * CW;
     var lineH = fontPx * LH;
     var gridW = cols * charW;
