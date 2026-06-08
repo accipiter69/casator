@@ -19,6 +19,7 @@ window.PHX_DATA_URI =
   var ORANGE = [250, 76, 20];
   var WHITE = [255, 230, 200];
   var DPR = Math.min(2, window.devicePixelRatio || 1);
+  var IS_MOBILE = false; // set by updateCellMetrics — drives the perf budget
   // Cell + font px scale with the stage width — on narrow viewports the
   // default 8/11 yields a sparse grid (only a handful of letters across
   // the bird), so step down for mobile/tablet to keep the texture dense.
@@ -26,15 +27,25 @@ window.PHX_DATA_URI =
   var FONT_PX = 11;
   function updateCellMetrics() {
     var w = stage.getBoundingClientRect().width;
+    var dpr = window.devicePixelRatio || 1;
     if (w < 480) {
-      CELL = 5;
-      FONT_PX = 7;
+      // Phone: coarser cell + DPR 1. Per-frame fillText volume and canvas
+      // fill area are the scroll-jank bottleneck, so cut both roughly in
+      // half here (CELL 5→6 ≈ -30% cells; DPR 2→1 ≈ -75% fill pixels).
+      CELL = 6;
+      FONT_PX = 8;
+      DPR = 1;
+      IS_MOBILE = true;
     } else if (w < 768) {
       CELL = 6;
       FONT_PX = 9;
+      DPR = Math.min(1.5, dpr);
+      IS_MOBILE = true;
     } else {
       CELL = 8;
       FONT_PX = 11;
+      DPR = Math.min(2, dpr);
+      IS_MOBILE = false;
     }
   }
   updateCellMetrics();
@@ -164,6 +175,12 @@ window.PHX_DATA_URI =
     fitCanvas(cv);
     fitTrailCanvas();
     grid = sampleImage();
+    // Cache the stage width once per layout so the render loop / particle
+    // spawner never calls getBoundingClientRect (forced reflow) per frame.
+    stageW = stage.getBoundingClientRect().width;
+    // Phone: far fewer embers — 220 fillText on the huge trail canvas every
+    // frame (only while scrolling) is the main scroll-time spike.
+    MAX_PARTICLES = IS_MOBILE ? 60 : 220;
   }
 
   /* The dynamic transform composes its offsets onto translate(-50%,-50%)
@@ -206,9 +223,9 @@ window.PHX_DATA_URI =
   });
 
   function readScroll() {
+    // Pure scrollY math — no getBoundingClientRect, so scroll events don't
+    // force a synchronous layout (the old heroBottom value was never used).
     var vh = window.innerHeight;
-    var heroBottom =
-      window.scrollY + (stage.getBoundingClientRect().top + stage.offsetHeight);
     var threshold = vh * 0.85;
     sP = Math.max(0, Math.min(1, window.scrollY / threshold));
   }
@@ -224,7 +241,8 @@ window.PHX_DATA_URI =
 
   /* ---- Particle pool (burning embers detaching from silhouette) ---- */
   var particles = [];
-  var MAX_PARTICLES = 220;
+  var MAX_PARTICLES = 220; // lowered to 60 on mobile in layout()
+  var stageW = 0; // cached stage width — avoids getBoundingClientRect in loop
 
   function spawnParticle() {
     if (!grid) return;
@@ -242,10 +260,10 @@ window.PHX_DATA_URI =
     // Convert grid cell to local px (stage coords) then add to particles
     var localX = (c + 0.5) * (grid.w / grid.cols);
     var localY = (r + 0.5) * (grid.h / grid.rows);
-    // Trail canvas is 2x wide centered → offset by stage width / 2
-    var rect = stage.getBoundingClientRect();
+    // Trail canvas is 2x wide centered → offset by stage width / 2.
+    // Cached stageW (set in layout) — never read layout geometry in the loop.
     particles.push({
-      x: localX + rect.width * 0.5,
+      x: localX + stageW * 0.5,
       y: localY,
       vx: (Math.random() - 0.5) * 0.6,
       vy: 0.4 + Math.random() * 1.2,
@@ -260,6 +278,7 @@ window.PHX_DATA_URI =
 
   /* ---- Main render loop ---- */
   var t0 = performance.now();
+  var lastDraw = 0; // last heavy-canvas redraw time (mobile fps throttle)
   // Pause the canvas render loop while the hero is off-screen (saves
   // CPU/GPU compositing when scrolled away).
   var inView = true;
@@ -320,6 +339,16 @@ window.PHX_DATA_URI =
       return;
     }
 
+    // Mobile: redraw the ASCII grid + particles at ~30fps while the
+    // transform above keeps running at 60fps. The wing-flap / letter churn
+    // is imperceptible at 30fps but halves the per-second draw cost — the
+    // single biggest scroll-jank win on phones.
+    if (IS_MOBILE && now - lastDraw < 33) {
+      schedule();
+      return;
+    }
+    lastDraw = now;
+
     // Clear ascii canvas
     ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.font = FONT_PX * DPR + 'px ui-monospace, "JetBrains Mono", monospace';
@@ -378,7 +407,7 @@ window.PHX_DATA_URI =
 
     // Spawn particles based on scroll progress
     if (sPLerp > 0.08) {
-      var burst = Math.floor(sPLerp * 4);
+      var burst = Math.floor(sPLerp * (IS_MOBILE ? 2 : 4));
       for (var i = 0; i < burst; i++) spawnParticle();
     }
 
