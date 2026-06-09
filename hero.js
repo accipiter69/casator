@@ -25,6 +25,8 @@ window.PHX_DATA_URI =
   var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".split("");
   var ORANGE = [250, 76, 20];
   var WHITE = [255, 230, 200];
+  // Overall opacity of the white ASCII letters drawn over the phoenix image.
+  var LETTER_OPACITY = 0.5;
   var DPR = Math.min(2, window.devicePixelRatio || 1);
   var IS_MOBILE = false; // set by updateCellMetrics — drives the perf budget
   // Cell + font px scale with the stage width — on narrow viewports the
@@ -407,7 +409,7 @@ window.PHX_DATA_URI =
 
         var edge = Math.min(1, (a - MASK_A) / EDGE_BAND);
         edge = edge * edge * (3 - 2 * edge); // smoothstep
-        var alpha = edge * (0.4 + I * 0.55);
+        var alpha = edge * (0.4 + I * 0.55) * LETTER_OPACITY;
         ctx.fillStyle = "rgba(255,255,255," + alpha.toFixed(2) + ")";
         ctx.fillText(CHARS[letterIdx], x, y);
       }
@@ -492,7 +494,7 @@ window.PHX_DATA_URI =
         var letterIdx = seed % CHARS.length;
         var edge = Math.min(1, (a - MASK_A) / EDGE_BAND);
         edge = edge * edge * (3 - 2 * edge);
-        var alpha = edge * (0.4 + I * 0.55);
+        var alpha = edge * (0.4 + I * 0.55) * LETTER_OPACITY;
         ctx.fillStyle = "rgba(255,255,255," + alpha.toFixed(2) + ")";
         ctx.fillText(CHARS[letterIdx], x, y);
       }
