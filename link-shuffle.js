@@ -161,6 +161,10 @@ function initLinkShuffle() {
   linkShuffle(".nav_link");
   linkShuffle(".cta_card.h3", { eventTarget: ".cta_card" });
   linkShuffle(".text-11", { eventTarget: ".article-item" });
+  linkShuffle(".nav_link");
+  linkShuffle(".text-10", { eventTarget: ".news_filter-item" });
+  linkShuffle(".text-10", { eventTarget: ".blog-tags-item" });
+  linkShuffle(".u-paragraph-small", { eventTarget: ".is--back" });
 }
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initLinkShuffle, {
