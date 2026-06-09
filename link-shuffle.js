@@ -160,7 +160,7 @@ function initLinkShuffle() {
   linkShuffle(".footer_link");
   linkShuffle(".nav_link");
   linkShuffle(".cta_card.h3", { eventTarget: ".cta_card" });
-  linkShuffle(".text-11", { eventTarget: ".is--date-anim" });
+  linkShuffle(".text-11", { eventTarget: ".article-item" });
 }
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initLinkShuffle, {
