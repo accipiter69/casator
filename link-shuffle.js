@@ -153,16 +153,14 @@ function initLinkShuffle() {
   // so swapped glyphs don't jiggle layout. On touch devices that's
   // pointless (no hover to trigger it) and the 1ch boxes can wreck word
   // spacing — so only run where pointer-hover actually exists.
-  if (
-    window.matchMedia &&
-    !window.matchMedia("(hover: hover)").matches
-  ) {
+  if (window.matchMedia && !window.matchMedia("(hover: hover)").matches) {
     return;
   }
   linkShuffle(".button_main_text", { eventTarget: ".button_main_wrap" });
   linkShuffle(".footer_link");
   linkShuffle(".nav_link");
   linkShuffle(".cta_card.h3", { eventTarget: ".cta_card" });
+  linkShuffle(".text-11", { eventTarget: ".is--date-anim" });
 }
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initLinkShuffle, {
