@@ -20,10 +20,9 @@ function asciiParticles(selector, opts) {
   var SELECTOR = selector || ".ascii_wrap";
   var TEXT_SEL = opts.textSelector || ".ascii_text";
 
-  // Static mode: paint the ASCII once and do NOTHING else — no physics,
-  // no rAF, no cursor/scroll reaction. Use for pages with many icons
-  // (.ascii_static) where the live effect would lag. Only re-layouts +
-  // repaints on size change so the glyphs stay crisp.
+  // Static mode (.ascii_static): keep the cursor-hover repel, but DON'T
+  // react to scroll. For pages with many icons where the scroll-scatter
+  // on all of them at once causes jank. Hover still works per-icon.
   var STATIC = !!opts.static;
 
   // Glyphs are drawn this many times their cell size — >1 makes the
@@ -237,23 +236,11 @@ function asciiParticles(selector, opts) {
       cssH: 0,
       fontPx: 12,
       visible: true,
-      static: STATIC,
+      noScroll: STATIC, // .ascii_static → cursor only, ignores scroll
     };
     layout(state);
     instances.push(state);
     paint(state); // immediate static frame (don't wait for the rAF/IO)
-
-    // .ascii_static → one render, no motion. Skip IO/physics/rAF entirely;
-    // just relayout + repaint on resize so it stays sharp.
-    if (state.static) {
-      if (window.ResizeObserver) {
-        new ResizeObserver(function () {
-          layout(state);
-          paint(state);
-        }).observe(wrap);
-      }
-      return;
-    }
 
     // Reduced motion → keep the static paint, no physics, no rAF.
     if (reduce) return;
@@ -283,14 +270,15 @@ function asciiParticles(selector, opts) {
     scrollVelocity *= CFG.scrollDecay / 100;
     if (Math.abs(scrollVelocity) < 0.02) scrollVelocity = 0;
 
-    var anyVisible = false;
+    var anyActive = false;
     for (var s = 0; s < instances.length; s++) {
       var state = instances[s];
-      if (state.static) continue; // rendered once, never animates
       if (!state.visible) continue;
-      anyVisible = true;
       var mouse = state.mouse;
       var ps = state.particles;
+      // .ascii_static ignores scroll; .ascii_wrap scatters on scroll.
+      var scrolling = !state.noScroll && Math.abs(scrollVelocity) > 0.3;
+      var moving = false;
       for (var i = 0; i < ps.length; i++) {
         var p = ps[i];
         if (mouse.active) {
@@ -307,9 +295,8 @@ function asciiParticles(selector, opts) {
             p.vy += Math.sin(ang) * str;
           }
         }
-        var absScroll = Math.abs(scrollVelocity);
-        if (absScroll > 0.3) {
-          var sv = Math.min(absScroll, 150) / 150;
+        if (scrolling) {
+          var sv = Math.min(Math.abs(scrollVelocity), 150) / 150;
           var a2 = Math.random() * Math.PI * 2;
           var sf =
             sv *
@@ -323,12 +310,22 @@ function asciiParticles(selector, opts) {
             (scrollVelocity > 0 ? 1 : -1) * sv * CFG.scrollForce * 0.04;
         }
         p.update();
+        // Still in motion? (velocity left, or not yet back at origin)
+        if (
+          !moving &&
+          (Math.abs(p.vx) > 0.01 ||
+            Math.abs(p.vy) > 0.01 ||
+            Math.abs(p.x - p.ox) > 0.1 ||
+            Math.abs(p.y - p.oy) > 0.1)
+        )
+          moving = true;
       }
       paint(state);
+      // Keep the loop alive only for instances that actually need it —
+      // idle, un-hovered, settled icons sleep (zero repaint cost).
+      if (mouse.active || scrolling || moving) anyActive = true;
     }
-    // Keep ticking only while something is on screen (or settling).
-    if (anyVisible || scrollVelocity !== 0)
-      rafId = requestAnimationFrame(frame);
+    if (anyActive) rafId = requestAnimationFrame(frame);
   }
   function ensureRunning() {
     if (reduce || rafId) return;
@@ -341,22 +338,23 @@ function asciiParticles(selector, opts) {
     if (any) rafId = requestAnimationFrame(frame);
   }
 
-  /* ---- Global input (mouse + scroll), once — skipped in static mode ---- */
+  /* ---- Global input (mouse + scroll), once ---- */
+  // Static instances don't react to scroll, so don't even listen for it.
   if (!STATIC) {
-  window.addEventListener(
-    "scroll",
-    function () {
-      var cur = window.scrollY;
-      scrollVelocity += (cur - lastScrollY) * 0.6;
-      lastScrollY = cur;
-      ensureRunning();
-    },
-    { passive: true },
-  );
+    window.addEventListener(
+      "scroll",
+      function () {
+        var cur = window.scrollY;
+        scrollVelocity += (cur - lastScrollY) * 0.6;
+        lastScrollY = cur;
+        ensureRunning();
+      },
+      { passive: true },
+    );
+  }
   window.addEventListener("mousemove", function (e) {
     for (var i = 0; i < instances.length; i++) {
       var state = instances[i];
-      if (state.static) continue;
       var rect = state.canvas.getBoundingClientRect();
       if (
         e.clientX >= rect.left &&
@@ -384,16 +382,12 @@ function asciiParticles(selector, opts) {
       }
     }
   });
-  }
 
   var rT;
   window.addEventListener("resize", function () {
     clearTimeout(rT);
     rT = setTimeout(function () {
-      for (var i = 0; i < instances.length; i++) {
-        layout(instances[i]);
-        if (instances[i].static) paint(instances[i]); // rAF won't repaint it
-      }
+      for (var i = 0; i < instances.length; i++) layout(instances[i]);
       ensureRunning();
     }, 200);
   });
@@ -402,8 +396,8 @@ function asciiParticles(selector, opts) {
 }
 
 function initAsciiParticles() {
-  asciiParticles(".ascii_wrap"); // full interactive effect
-  asciiParticles(".ascii_static", { static: true }); // render-once, no motion
+  asciiParticles(".ascii_wrap"); // full effect: cursor + scroll-scatter
+  asciiParticles(".ascii_static", { static: true }); // cursor only, no scroll
 }
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initAsciiParticles, {
