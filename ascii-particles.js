@@ -20,9 +20,9 @@ function asciiParticles(selector, opts) {
   var SELECTOR = selector || ".ascii_wrap";
   var TEXT_SEL = opts.textSelector || ".ascii_text";
 
-  // Static mode (.ascii_static): keep the cursor-hover repel, but DON'T
-  // react to scroll. For pages with many icons where the scroll-scatter
-  // on all of them at once causes jank. Hover still works per-icon.
+  // Static mode (.ascii_static): NO effects at all — just paint the
+  // letters once. No cursor, no scroll, no rAF. For pages with many
+  // icons where any per-frame work causes jank. Repaints only on resize.
   var STATIC = !!opts.static;
 
   // Glyphs are drawn this many times their cell size — >1 makes the
@@ -236,11 +236,23 @@ function asciiParticles(selector, opts) {
       cssH: 0,
       fontPx: 12,
       visible: true,
-      noScroll: STATIC, // .ascii_static → cursor only, ignores scroll
+      static: STATIC, // .ascii_static → letters only, no animation
     };
     layout(state);
     instances.push(state);
     paint(state); // immediate static frame (don't wait for the rAF/IO)
+
+    // .ascii_static → just the letters: no cursor/scroll/rAF, ever.
+    // Re-layout + repaint only when the box resizes so it stays crisp.
+    if (state.static) {
+      if (window.ResizeObserver) {
+        new ResizeObserver(function () {
+          layout(state);
+          paint(state);
+        }).observe(wrap);
+      }
+      return;
+    }
 
     // Reduced motion → keep the static paint, no physics, no rAF.
     if (reduce) return;
@@ -273,11 +285,11 @@ function asciiParticles(selector, opts) {
     var anyActive = false;
     for (var s = 0; s < instances.length; s++) {
       var state = instances[s];
+      if (state.static) continue; // letters only — never animates
       if (!state.visible) continue;
       var mouse = state.mouse;
       var ps = state.particles;
-      // .ascii_static ignores scroll; .ascii_wrap scatters on scroll.
-      var scrolling = !state.noScroll && Math.abs(scrollVelocity) > 0.3;
+      var scrolling = Math.abs(scrollVelocity) > 0.3;
       var moving = false;
       for (var i = 0; i < ps.length; i++) {
         var p = ps[i];
@@ -352,6 +364,7 @@ function asciiParticles(selector, opts) {
       { passive: true },
     );
   }
+  if (!STATIC)
   window.addEventListener("mousemove", function (e) {
     for (var i = 0; i < instances.length; i++) {
       var state = instances[i];
@@ -387,7 +400,10 @@ function asciiParticles(selector, opts) {
   window.addEventListener("resize", function () {
     clearTimeout(rT);
     rT = setTimeout(function () {
-      for (var i = 0; i < instances.length; i++) layout(instances[i]);
+      for (var i = 0; i < instances.length; i++) {
+        layout(instances[i]);
+        if (instances[i].static) paint(instances[i]); // rAF won't repaint it
+      }
       ensureRunning();
     }, 200);
   });
@@ -397,7 +413,7 @@ function asciiParticles(selector, opts) {
 
 function initAsciiParticles() {
   asciiParticles(".ascii_wrap"); // full effect: cursor + scroll-scatter
-  asciiParticles(".ascii_static", { static: true }); // cursor only, no scroll
+  asciiParticles(".ascii_static", { static: true }); // letters only, no effects
 }
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initAsciiParticles, {
