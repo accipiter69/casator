@@ -26,7 +26,7 @@ window.PHX_DATA_URI =
   var ORANGE = [250, 76, 20];
   var WHITE = [255, 230, 200];
   // Overall opacity of the white ASCII letters drawn over the phoenix image.
-  var LETTER_OPACITY = 0.5;
+  var LETTER_OPACITY = 0.7;
   var DPR = Math.min(2, window.devicePixelRatio || 1);
   var IS_MOBILE = false; // set by updateCellMetrics — drives the perf budget
   // Cell + font px scale with the stage width — on narrow viewports the
