@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
         end: "bottom bottom",
         scrub: true,
         invalidateOnRefresh: true,
-        markers: true,
+        // markers: true,
       },
     });
   });
