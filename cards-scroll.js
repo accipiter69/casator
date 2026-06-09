@@ -21,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
     stage.style.position = "sticky";
     stage.style.top = "3.61rem";
     stage.style.height = "calc(100vh - 3.61rem)";
-    stage.style.overflowX = "clip";
     wrap.style.height = window.innerHeight + scrollAmount + "px";
 
     gsap.to(line, {
