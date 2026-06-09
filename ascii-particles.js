@@ -20,6 +20,12 @@ function asciiParticles(selector, opts) {
   var SELECTOR = selector || ".ascii_wrap";
   var TEXT_SEL = opts.textSelector || ".ascii_text";
 
+  // Static mode: paint the ASCII once and do NOTHING else — no physics,
+  // no rAF, no cursor/scroll reaction. Use for pages with many icons
+  // (.ascii_static) where the live effect would lag. Only re-layouts +
+  // repaints on size change so the glyphs stay crisp.
+  var STATIC = !!opts.static;
+
   // Glyphs are drawn this many times their cell size — >1 makes the
   // strokes overlap so the mass reads brighter/denser on a dark bg
   // (the tiny thin glyphs otherwise look dim due to sub-pixel AA).
@@ -231,10 +237,23 @@ function asciiParticles(selector, opts) {
       cssH: 0,
       fontPx: 12,
       visible: true,
+      static: STATIC,
     };
     layout(state);
     instances.push(state);
     paint(state); // immediate static frame (don't wait for the rAF/IO)
+
+    // .ascii_static → one render, no motion. Skip IO/physics/rAF entirely;
+    // just relayout + repaint on resize so it stays sharp.
+    if (state.static) {
+      if (window.ResizeObserver) {
+        new ResizeObserver(function () {
+          layout(state);
+          paint(state);
+        }).observe(wrap);
+      }
+      return;
+    }
 
     // Reduced motion → keep the static paint, no physics, no rAF.
     if (reduce) return;
@@ -267,6 +286,7 @@ function asciiParticles(selector, opts) {
     var anyVisible = false;
     for (var s = 0; s < instances.length; s++) {
       var state = instances[s];
+      if (state.static) continue; // rendered once, never animates
       if (!state.visible) continue;
       anyVisible = true;
       var mouse = state.mouse;
@@ -321,7 +341,8 @@ function asciiParticles(selector, opts) {
     if (any) rafId = requestAnimationFrame(frame);
   }
 
-  /* ---- Global input (mouse + scroll), once ---- */
+  /* ---- Global input (mouse + scroll), once — skipped in static mode ---- */
+  if (!STATIC) {
   window.addEventListener(
     "scroll",
     function () {
@@ -335,6 +356,7 @@ function asciiParticles(selector, opts) {
   window.addEventListener("mousemove", function (e) {
     for (var i = 0; i < instances.length; i++) {
       var state = instances[i];
+      if (state.static) continue;
       var rect = state.canvas.getBoundingClientRect();
       if (
         e.clientX >= rect.left &&
@@ -362,12 +384,16 @@ function asciiParticles(selector, opts) {
       }
     }
   });
+  }
 
   var rT;
   window.addEventListener("resize", function () {
     clearTimeout(rT);
     rT = setTimeout(function () {
-      for (var i = 0; i < instances.length; i++) layout(instances[i]);
+      for (var i = 0; i < instances.length; i++) {
+        layout(instances[i]);
+        if (instances[i].static) paint(instances[i]); // rAF won't repaint it
+      }
       ensureRunning();
     }, 200);
   });
@@ -376,7 +402,8 @@ function asciiParticles(selector, opts) {
 }
 
 function initAsciiParticles() {
-  asciiParticles(".ascii_wrap");
+  asciiParticles(".ascii_wrap"); // full interactive effect
+  asciiParticles(".ascii_static", { static: true }); // render-once, no motion
 }
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initAsciiParticles, {
