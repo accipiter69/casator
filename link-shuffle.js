@@ -164,7 +164,7 @@ function initLinkShuffle() {
   linkShuffle(".nav_link");
   linkShuffle(".text-10", { eventTarget: ".news_filter-item" });
   linkShuffle(".text-10", { eventTarget: ".article-item" });
-  linkShuffle(".text-11", { eventTarget: ".team_item-card" });
+  linkShuffle(".team_item-card", { eventTarget: ".text-11" });
   linkShuffle(".text-13", { eventTarget: ".nav-dropdown_link" });
 }
 if (document.readyState === "loading") {
