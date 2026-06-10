@@ -164,7 +164,7 @@ function initLinkShuffle() {
   linkShuffle(".nav_link");
   linkShuffle(".text-10", { eventTarget: ".news_filter-item" });
   linkShuffle(".text-10", { eventTarget: ".article-item" });
-  linkShuffle(".u-paragraph-small", { eventTarget: ".is--back" });
+
   linkShuffle(".text-13", { eventTarget: ".nav-dropdown_link" });
 }
 if (document.readyState === "loading") {
