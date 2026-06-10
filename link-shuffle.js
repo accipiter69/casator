@@ -160,11 +160,11 @@ function initLinkShuffle() {
   linkShuffle(".footer_link");
   linkShuffle(".nav_link");
   linkShuffle(".cta_card.h3", { eventTarget: ".cta_card" });
-  linkShuffle(".text-11", { eventTarget: ".article-item" });
+  linkShuffle(".article-item .text-11", { eventTarget: ".article-item" });
   linkShuffle(".nav_link");
   linkShuffle(".text-10", { eventTarget: ".news_filter-item" });
   linkShuffle(".text-10", { eventTarget: ".article-item" });
-  linkShuffle(".team_item-card", { eventTarget: ".text-11" });
+  linkShuffle(".team_item-card .text-11", { eventTarget: ".team_item-card" });
   linkShuffle(".text-13", { eventTarget: ".nav-dropdown_link" });
 }
 if (document.readyState === "loading") {
