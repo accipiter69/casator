@@ -46,9 +46,6 @@ function linkShuffle(selector, opts) {
     var word = document.createElement("span");
     word.className = "shuffle-word";
     word.setAttribute("aria-hidden", "true");
-    // Prevent wrapping in Firefox
-    word.style.whiteSpace = "nowrap";
-    word.style.display = "inline-block";
     
     // Create temporary span to measure actual character widths if Firefox
     var measurer = null;
@@ -72,8 +69,8 @@ function linkShuffle(selector, opts) {
       if (isFirefox && measurer) {
         measurer.textContent = ch === " " ? "\u00A0" : ch; // Use non-breaking space for measurement
         var actualWidth = measurer.getBoundingClientRect().width;
-        // Add small buffer for Firefox to prevent wrapping
-        s.style.width = (actualWidth * 1.05) + "px";
+        // Add larger buffer for Firefox to prevent wrapping
+        s.style.width = (actualWidth * 1.1) + "px"; // 10% buffer instead of 5%
       } else {
         s.style.width = "1ch";
       }
