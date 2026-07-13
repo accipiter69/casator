@@ -55,11 +55,6 @@ function linkShuffle(selector, opts) {
       s.textContent = ch === " " ? " " : ch;
       s.style.display = "inline-block";
       
-      // Firefox-specific handling
-      if (isFirefox) {
-        // Use a different monospace font for Firefox that has more reliable ch units
-        s.style.fontFamily = "'Courier New', Courier, monospace";
-      }
       s.style.width = "1ch";
       
       s.style.textAlign = "center";
