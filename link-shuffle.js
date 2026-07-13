@@ -57,23 +57,9 @@ function linkShuffle(selector, opts) {
       
       // Firefox-specific handling
       if (isFirefox) {
-        // For Firefox, use explicit pixel width measurement
-        // This avoids Firefox's unreliable ch unit calculation
-        s.style.width = "auto";
-        s.style.visibility = "hidden";
-        s.style.position = "absolute";
-        
-        // Temporarily add to DOM to measure
-        word.appendChild(s);
-        var charWidth = s.getBoundingClientRect().width;
-        
-        // Set explicit width with 15% buffer
-        s.style.width = Math.ceil(charWidth * 1.15) + "px";
-        s.style.visibility = "";
-        s.style.position = "";
-        
-        // Remove from DOM (will be re-added in proper order)
-        word.removeChild(s);
+        // Use a different monospace font for Firefox that has more reliable ch units
+        s.style.fontFamily = "'Courier New', Courier, monospace";
+        s.style.width = "1ch";
       } else {
         s.style.width = "1ch";
       }
