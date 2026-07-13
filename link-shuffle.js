@@ -47,16 +47,6 @@ function linkShuffle(selector, opts) {
     word.className = "shuffle-word";
     word.setAttribute("aria-hidden", "true");
     
-    // Create temporary span to measure actual character widths if Firefox
-    var measurer = null;
-    if (isFirefox) {
-      measurer = document.createElement("span");
-      measurer.style.visibility = "hidden";
-      measurer.style.position = "absolute";
-      measurer.style.font = window.getComputedStyle(el).font;
-      document.body.appendChild(measurer);
-    }
-    
     var chars = original.split("");
     for (var i = 0; i < chars.length; i++) {
       var ch = chars[i];
@@ -65,25 +55,31 @@ function linkShuffle(selector, opts) {
       s.textContent = ch === " " ? " " : ch;
       s.style.display = "inline-block";
       
-      // Calculate actual character width for better Firefox compatibility
-      if (isFirefox && measurer) {
-        measurer.textContent = ch === " " ? "\u00A0" : ch; // Use non-breaking space for measurement
-        var actualWidth = measurer.getBoundingClientRect().width;
-        // Use exact measurement with minimal buffer
-        s.style.width = Math.ceil(actualWidth) + "px"; // Round up to next pixel
-        // Prevent individual character from wrapping
-        s.style.whiteSpace = "nowrap";
+      // Firefox-specific handling
+      if (isFirefox) {
+        // For Firefox, use explicit pixel width measurement
+        // This avoids Firefox's unreliable ch unit calculation
+        s.style.width = "auto";
+        s.style.visibility = "hidden";
+        s.style.position = "absolute";
+        
+        // Temporarily add to DOM to measure
+        word.appendChild(s);
+        var charWidth = s.getBoundingClientRect().width;
+        
+        // Set explicit width with 15% buffer
+        s.style.width = Math.ceil(charWidth * 1.15) + "px";
+        s.style.visibility = "";
+        s.style.position = "";
+        
+        // Remove from DOM (will be re-added in proper order)
+        word.removeChild(s);
       } else {
         s.style.width = "1ch";
       }
       
       s.style.textAlign = "center";
       word.appendChild(s);
-    }
-    
-    // Clean up measurer
-    if (measurer) {
-      document.body.removeChild(measurer);
     }
 
     // Screen-reader fallback — visually hidden but readable.
