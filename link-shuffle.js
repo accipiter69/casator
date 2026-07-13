@@ -59,7 +59,8 @@ function linkShuffle(selector, opts) {
       if (isFirefox) {
         // Use a different monospace font for Firefox that has more reliable ch units
         s.style.fontFamily = "'Courier New', Courier, monospace";
-        s.style.width = "1ch";
+        // Add extra width buffer for Firefox to prevent wrapping
+        s.style.width = "1.1ch";
       } else {
         s.style.width = "1ch";
       }
