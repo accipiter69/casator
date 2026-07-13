@@ -69,8 +69,10 @@ function linkShuffle(selector, opts) {
       if (isFirefox && measurer) {
         measurer.textContent = ch === " " ? "\u00A0" : ch; // Use non-breaking space for measurement
         var actualWidth = measurer.getBoundingClientRect().width;
-        // Add larger buffer for Firefox to prevent wrapping
-        s.style.width = (actualWidth * 1.1) + "px"; // 10% buffer instead of 5%
+        // Use exact measurement with minimal buffer
+        s.style.width = Math.ceil(actualWidth) + "px"; // Round up to next pixel
+        // Prevent individual character from wrapping
+        s.style.whiteSpace = "nowrap";
       } else {
         s.style.width = "1ch";
       }
