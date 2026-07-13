@@ -38,21 +38,53 @@ function linkShuffle(selector, opts) {
     el.dataset.shuffleBound = "1";
     el.classList.add("link-shuffle");
 
+    // Detect Firefox for special handling
+    var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+
     // Animated layer: each char wrapped in a fixed-width inline-block
     // span so swapped glyphs don't jiggle the layout.
     var word = document.createElement("span");
     word.className = "shuffle-word";
     word.setAttribute("aria-hidden", "true");
+    // Prevent wrapping in Firefox
+    word.style.whiteSpace = "nowrap";
+    word.style.display = "inline-block";
+    
+    // Create temporary span to measure actual character widths if Firefox
+    var measurer = null;
+    if (isFirefox) {
+      measurer = document.createElement("span");
+      measurer.style.visibility = "hidden";
+      measurer.style.position = "absolute";
+      measurer.style.font = window.getComputedStyle(el).font;
+      document.body.appendChild(measurer);
+    }
+    
     var chars = original.split("");
     for (var i = 0; i < chars.length; i++) {
       var ch = chars[i];
       var s = document.createElement("span");
       s.dataset.original = ch;
-      s.textContent = ch === " " ? " " : ch;
+      s.textContent = ch === " " ? " " : ch;
       s.style.display = "inline-block";
-      s.style.width = "1ch";
+      
+      // Calculate actual character width for better Firefox compatibility
+      if (isFirefox && measurer) {
+        measurer.textContent = ch === " " ? "\u00A0" : ch; // Use non-breaking space for measurement
+        var actualWidth = measurer.getBoundingClientRect().width;
+        // Add small buffer for Firefox to prevent wrapping
+        s.style.width = (actualWidth * 1.05) + "px";
+      } else {
+        s.style.width = "1ch";
+      }
+      
       s.style.textAlign = "center";
       word.appendChild(s);
+    }
+    
+    // Clean up measurer
+    if (measurer) {
+      document.body.removeChild(measurer);
     }
 
     // Screen-reader fallback — visually hidden but readable.
@@ -101,7 +133,7 @@ function linkShuffle(selector, opts) {
           (function (sp) {
             return function () {
               var orig = sp.dataset.original;
-              sp.textContent = orig === " " ? " " : orig;
+              sp.textContent = orig === " " ? " " : orig;
             };
           })(span),
           delay + STEPS * STEP_MS,
@@ -128,7 +160,7 @@ function linkShuffle(selector, opts) {
       for (var i = 0; i < spans.length; i++) {
         cancel(spans[i]);
         var orig = spans[i].dataset.original;
-        spans[i].textContent = orig === " " ? " " : orig;
+        spans[i].textContent = orig === " " ? " " : orig;
       }
     }
 
